@@ -58,5 +58,7 @@ def learn(write=True):
           'region_split_singapore':0.2 if out['weights'].get('region',{}).get('Singapore',0)>=-0.2 else 0.1,
           'require_github':out['weights'].get('github',{}).get('no',0)<-0.7,
           'note':f'baseline approve rate {base}%. weights are log-odds vs baseline; confidence grows with decisions.'}
-    if write: json.dump(out,open(F.TASTE,'w'),indent=1)
+    if write:
+        if S.DATABASE_URL: S.taste_set(out)
+        else: json.dump(out,open(F.TASTE,'w'),indent=1)
     return out

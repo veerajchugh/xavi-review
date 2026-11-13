@@ -41,6 +41,8 @@ PRIOR={'founding_tenure':{'6-11 mo':4,'12-23 mo':12,'24+ mo':15},'github':{'yes'
  'yc':{'yes':3},'company_stage':{'tiny (<=10)':3,'small (11-50)':4}}
 PRIOR_MAX=15+10+10+8+10+6+6+4+3+4
 def load_taste():
+    if os.environ.get('DATABASE_URL'):
+        import store; return store.taste_get() or {}
     try: return json.load(open(TASTE))
     except Exception: return {}
 def fit(c,taste=None):

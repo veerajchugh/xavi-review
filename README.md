@@ -35,6 +35,10 @@ server.py, web/, lib/{gemapi,store,fit,learn_core}.py, add_batch.py, learn.py, u
 sourcing_plan.py, taste.json, data/xavi.db, shots/
 
 ## Deploy (Render)
+Live setup: Docker web service (Starter) + Render Postgres (`DATABASE_URL`); `lib/store.py` uses Postgres when
+`DATABASE_URL` is set (taste.json then lives in the `meta` table) and SQLite on the box otherwise.
+The Blueprint below (disk variant) is kept for reference; Render's Blueprint API 400'd on this repo.
+
 `render.yaml` is a Blueprint: one `starter` web service (python, `python3 server.py`, health check `/healthz`)
 with a 1 GB persistent disk at `/data` (`DATA_DIR=/data` holds xavi.db + taste.json, so decisions survive deploys).
 Secrets are env vars, never in git: `GEM_API_KEY`, `SITE_PASSWORD` (same as box `.site_password`), `SITE_SECRET`, `ADMIN_TOKEN`.
