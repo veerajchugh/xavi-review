@@ -51,6 +51,7 @@ def create_candidate(c):
     body={k:v for k,v in {'created_by':VEERAJ,'first_name':parts[0] if parts else None,'last_name':' '.join(parts[1:]) or None,
         'linked_in_handle':c.get('handle'),'profile_urls':urls or None,'title':c.get('current_title') or c.get('founding_role'),
         'company':c.get('current_company') or c.get('founding_company'),'location':c.get('location')}.items() if v}
+    if body.get('linked_in_handle'): body['autofill']=True   # Gem fills missing fields (incl. emails it can find) from LinkedIn; public API only offers this on create
     s,d,_=req('POST','v0/candidates',body=body)
     if s in(200,201) and isinstance(d,dict) and d.get('id'): return d['id'],'created'
     if s==400 and isinstance(d,dict):
