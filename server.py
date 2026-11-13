@@ -46,10 +46,10 @@ def stats(c,rows):
             'queue':sum(1 for r in rows if r['status'] in('queue','resurface')),'contacted':cont,'replied':rep,
             'approve_rate':round(a/max(1,a+sum(1 for r in rows if r['status']=='passed')),3),'reply_rate':round(rep/cont,3) if cont else None,
             'weeks':list(weeks.values())[::-1]}
-def gem_approve(r):
-    d=r['data']; d['handle']=r['handle']
+def _gem_add(r,projs):
+    """find-or-create in Gem by LinkedIn handle, add to projs it isn't already in; returns (gid, record of what this site added)."""
+    d=dict(r['data']); d['handle']=r['handle']
     gid,how=gemapi.ensure_candidate(d)
-    projs=[CFG['outreach_project_id']]+([CFG['singapore_project_id']] if d.get('region')=='Singapore' else [CFG['us_project_id']])
     prior=set((d.get('gem_prior') or {}).get('project_ids') or [])
     if how=='existing':
         g=gemapi.lookup_handle(r['handle']); prior|=set((g or {}).get('project_ids') or [])
@@ -57,10 +57,16 @@ def gem_approve(r):
     for p in projs:
         if p in prior: continue
         gemapi.add_to_project(p,[gid]); added.append(p)
-    enrolled=None
-    if ENABLE_SEQUENCE_ENROLL: enrolled='unsupported_by_gem_public_api'
-    return gid,{'created':how=='created','added_projects':added,'all_projects':projs,'enrolled':enrolled}
+    return gid,{'created':how=='created','added_projects':added,'all_projects':projs,'enrolled':None}
+def gem_approve(r):
+    # Xavi Outreach + Potential Xavi's (US) / Potential Xavi's SG. No sequence enrollment, nothing sent, no stage changes.
+    region_proj=CFG['singapore_project_id'] if r['data'].get('region')=='Singapore' else CFG['us_project_id']
+    return _gem_add(r,[CFG['outreach_project_id'],region_proj])
+def gem_pass(r):
+    # find-or-create in Gem + VC Rejections. Nothing sent, no stage changes.
+    return _gem_add(r,[CFG['rejections_project_id']])
 def gem_unapprove(r):
+    """Undo: remove from only the Gem projects this site added (approve or pass). Never deletes the Gem candidate."""
     gp=r['gem_projects'] or {}
     for p in (gp.get('added_projects') if isinstance(gp,dict) else []) or []:
         gemapi.remove_from_project(p,[r['gem_id']])
@@ -150,7 +156,7 @@ class H(BaseHTTPRequestHandler):
         if u.path=='/api/state':
             with LOCK:
                 c=store.conn(); rows=store.all_rows(c)
-                return self.send(200,{'candidates':[public(r) for r in rows],'stats':stats(c,rows),'taste':fit.load_taste(),'config':{k:CFG[k] for k in('outreach_project_url','us_project_url','singapore_project_url')},
+                return self.send(200,{'candidates':[public(r) for r in rows],'stats':stats(c,rows),'taste':fit.load_taste(),'config':{k:CFG[k] for k in('outreach_project_url','us_project_url','singapore_project_url','rejections_project_url')},
                                       'sequence_enroll_supported':False,'chips':CFG['chips']})
         return self.send(404,{'error':'not found'})
     def do_POST(self):
@@ -175,7 +181,11 @@ class H(BaseHTTPRequestHandler):
                     reasons=[x.strip()[:1000] for x in reasons if isinstance(x,str) and x.strip()]
                     gid=r['gem_id']; gp=r['gem_projects']
                     if dec=='approve' and r['status']!='approved':
+                        if r['status']=='passed' and gid: gem_unapprove(r)
                         gid,gp=gem_approve(r)
+                    elif dec!='approve' and r['status']!='passed':
+                        if r['status']=='approved' and gid: gem_unapprove(r)
+                        gid,gp=gem_pass(r)
                     c.execute('update candidates set status=?,decided_at=?,reasons=?,gem_id=?,gem_projects=? where handle=?',
                               ('approved' if dec=='approve' else 'passed',now,json.dumps(reasons),gid,json.dumps(gp) if gp else None,h))
                     c.execute('insert into decisions(handle,decision,reasons,features,fit,ts,batch) values(?,?,?,?,?,?,?)',(h,dec,json.dumps(reasons),json.dumps(fit.features(r['data'])),r['fit'],now,r['batch']))
@@ -192,7 +202,7 @@ class H(BaseHTTPRequestHandler):
                     c.commit(); t=learn_core.learn(); return self.send(200,{'ok':True,'taste':t})
                 if u.path in('/api/undo','/api/restore'):
                     if not r: return self.send(404,{'error':'unknown'})
-                    if r['status']=='approved' and r['gem_id']: gem_unapprove(r)
+                    if r['status'] in('approved','passed') and r['gem_id']: gem_unapprove(r)
                     c.execute("update candidates set status='queue',decided_at=null,gem_projects=null where handle=?",(h,))  # keep the note as a draft
                     c.execute('update decisions set undone=1 where handle=? and undone=0',(h,)); c.commit()
                     t=learn_core.learn(); self._rescore(c,t)

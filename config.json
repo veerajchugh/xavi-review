@@ -1,10 +1,16 @@
 {
  "outreach_project_id": "UHJvamVjdDoxNTc1NjQ2",
- "us_project_id": "UHJvamVjdDoxNTc1NDU5",
- "singapore_project_id": "UHJvamVjdDoxNTc1NDYw",
+ "us_project_id": "UHJvamVjdDoxNTc2MDcz",
+ "singapore_project_id": "UHJvamVjdDoxNTc2MDc0",
+ "rejections_project_id": "UHJvamVjdDoxNTc2MDc1",
+ "legacy_project_ids": {
+  "Xavi's": "UHJvamVjdDoxNTc1NDU5",
+  "Xavi Singapore": "UHJvamVjdDoxNTc1NDYw"
+ },
  "outreach_project_url": "https://www.gem.com/projects/Xavi-Outreach--UHJvamVjdDoxNTc1NjQ2",
- "us_project_url": "https://www.gem.com/projects/Xavi's--UHJvamVjdDoxNTc1NDU5",
- "singapore_project_url": "https://www.gem.com/projects/Xavi-Singapore--UHJvamVjdDoxNTc1NDYw",
+ "us_project_url": "https://www.gem.com/projects/Potential-Xavi's--UHJvamVjdDoxNTc2MDcz",
+ "singapore_project_url": "https://www.gem.com/projects/Potential-Xavi's-SG--UHJvamVjdDoxNTc2MDc0",
+ "rejections_project_url": "https://www.gem.com/projects/VC-Rejections--UHJvamVjdDoxNTc2MDc1",
  "chips": {
   "approve": [
    "Great GitHub",

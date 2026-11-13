@@ -7,10 +7,13 @@ Weekly thumbs-up / thumbs-down review for founding-engineer candidates, wired to
 Gem key is read server-side from /workspace/apple-pdes/.gem_key (override GEM_KEY_PATH). It never reaches the browser.
 
 ## What a decision does
+Gem changes are project membership + candidate create only: nothing is sent, no sequence enrollment, no stage changes.
 - Approve (→ / J): find-or-create the candidate in Gem by LinkedIn handle, add to **Xavi Outreach** (UHJvamVjdDoxNTc1NjQ2)
-  plus **Xavi's** (US, UHJvamVjdDoxNTc1NDU5) or **Xavi Singapore** (UHJvamVjdDoxNTc1NDYw). No sequence enrollment, nothing sent.
-- Pass (← / K): moves to Passed (the bin). Never re-queued by add_batch. Restore from the Passed tab.
-- Undo (U): reverts the last decision; for approvals it removes them from only the Gem projects this site added.
+  plus **Potential Xavi's** (US, UHJvamVjdDoxNTc2MDcz) or **Potential Xavi's SG** (Singapore, UHJvamVjdDoxNTc2MDc0).
+- Pass (← / K): find-or-create in Gem, add to **VC Rejections** (UHJvamVjdDoxNTc2MDc1), move to Passed (the bin). Never re-queued by add_batch. Restore from the Passed tab.
+- Flipping approve ↔ pass, Undo (U) and Restore remove the person from only the Gem projects this site added (`gem_projects.added_projects`); the Gem candidate itself is kept.
+- Old projects **Xavi's** (UHJvamVjdDoxNTc1NDU5) / **Xavi Singapore** (UHJvamVjdDoxNTc1NDYw) are no longer written. On 2026-11-13 the 43 approvals the site
+  had added there were moved to the Potential projects (backup: `data/gem_membership_backup_20261113.json`, log: `data/gem_move_log_20261113.json`).
 - Reason chips (1-6) after each decision feed the learner. O opens LinkedIn, G opens GitHub.
 
 ## Learning loop
