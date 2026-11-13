@@ -52,3 +52,6 @@ After the first deploy:
     python3 update_outreach.py status.json --remote   # POST /api/admin/outreach
     python3 sourcing_plan.py --remote                 # reads taste + seen list via GET /api/admin/dump
 Token comes from `$XAVI_ADMIN_TOKEN` or `.admin_token` (chmod 600); URL from `--remote URL`, `$XAVI_URL` or `.site_url`.
+
+## Open link (no password)
+Set `NO_AUTH=1` on the Render service to serve the review UI and `/api/*` without login. `/api/admin/*` always requires `ADMIN_TOKEN`; the Gem key never leaves the server.

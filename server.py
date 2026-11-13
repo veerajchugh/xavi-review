@@ -16,6 +16,7 @@ def _secret(env,f,n):
     return open(f).read().strip()
 # On Render these come from env vars (SITE_PASSWORD, SITE_SECRET, ADMIN_TOKEN, GEM_API_KEY); locally from dotfiles.
 PW=_secret('SITE_PASSWORD',PW_FILE,18); SECRET=_secret('SITE_SECRET',SECRET_FILE,32).encode(); ADMIN=_secret('ADMIN_TOKEN',ADMIN_FILE,32)
+NO_AUTH=os.environ.get('NO_AUTH','').strip().lower() in('1','true','yes')  # open link, no password; /api/admin/* still needs ADMIN_TOKEN
 LOCK=threading.Lock()
 ENABLE_SEQUENCE_ENROLL=False  # Gem public API has no enroll endpoint (GET /v0/sequences only). Keep False.
 def sign(v): return v+'.'+hmac.new(SECRET,v.encode(),hashlib.sha256).hexdigest()[:32]
@@ -80,6 +81,7 @@ class H(BaseHTTPRequestHandler):
     server_version='xavi'
     def log_message(self,fmt,*a): sys.stderr.write('%s %s\n'%(time.strftime('%H:%M:%S'),fmt%a))
     def authed(self):
+        if NO_AUTH: return True
         ck=http.cookies.SimpleCookie(self.headers.get('Cookie',''))
         return 'xr' in ck and valid(ck['xr'].value)
     def send(self,code,body,ctype='application/json',extra=None):
