@@ -33,3 +33,18 @@ The queue is always sorted by fit, best first.
 ## Files
 server.py, web/, lib/{gemapi,store,fit,learn_core}.py, add_batch.py, learn.py, update_outreach.py, export_for_sync.py,
 sourcing_plan.py, taste.json, data/xavi.db, shots/
+
+## Deploy (Render)
+`render.yaml` is a Blueprint: one `starter` web service (python, `python3 server.py`, health check `/healthz`)
+with a 1 GB persistent disk at `/data` (`DATA_DIR=/data` holds xavi.db + taste.json, so decisions survive deploys).
+Secrets are env vars, never in git: `GEM_API_KEY`, `SITE_PASSWORD` (same as box `.site_password`), `SITE_SECRET`, `ADMIN_TOKEN`.
+After the first deploy:
+    echo https://xavi-review.onrender.com > .site_url
+    python3 migrate_to_remote.py            # copies the box queue + decisions onto the Render disk (refuses if not empty; --force merges)
+
+## Pushing to the deployed site (admin API, `Authorization: Bearer $ADMIN_TOKEN`)
+    python3 add_batch.py new.json --remote            # POST /api/admin/add_batch  (dedupe + 60-day Gem/Gmail rule runs server-side)
+    python3 export_for_sync.py --remote               # GET  /api/admin/export_for_sync  (approved people + Gem emails)
+    python3 update_outreach.py status.json --remote   # POST /api/admin/outreach
+    python3 sourcing_plan.py --remote                 # reads taste + seen list via GET /api/admin/dump
+Token comes from `$XAVI_ADMIN_TOKEN` or `.admin_token` (chmod 600); URL from `--remote URL`, `$XAVI_URL` or `.site_url`.
