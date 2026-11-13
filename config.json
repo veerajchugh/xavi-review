@@ -134,5 +134,9 @@
   "total_usd_min": 150000000,
   "last_round_usd_min": 50000000,
   "last_round_within_months": 18
+ },
+ "recent_raise": {
+  "min_usd": 20000000,
+  "within_days": 60
  }
 }

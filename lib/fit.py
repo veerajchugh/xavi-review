@@ -30,15 +30,35 @@ def discipline(c):
     if EE.search(roles) and not SW.search(roles) and not FW.search(roles): return 'electrical/hardware'
     if fw and (sw or FW.search(roles)): return 'software+firmware'
     return 'software' if sw else 'other'
+import datetime as _dt
+RAISE=_CFG.get('recent_raise',{'min_usd':20_000_000,'within_days':60})
+def _days_since(d):
+    try: return (_dt.date.today()-_dt.date.fromisoformat(str(d)[:10])).days
+    except Exception: return None
+VENTURE=re.compile(r'^(pre_seed|seed|angel|series_[a-z]+|venture_round|growth|corporate_round|convertible_note|undisclosed)$')
+def _startup_round(c):
+    """Funding signals only count for venture-backed startups (not public cos' debt/IPO rounds, not big tech)."""
+    if BIGTECH.search(c.get('current_company') or ''): return False
+    if (c.get('current_hc') or 0)>=3000: return False
+    t=c.get('current_company_last_round_type')
+    return t is None or bool(VENTURE.match(t or 'x'))
+def recent_raise(c):
+    """Current employer announced a notable round (>= $20M) in the last ~60 days -> they probably won't leave."""
+    if not _startup_round(c): return False
+    amt=c.get('current_company_last_round_usd') or 0; d=_days_since(c.get('current_company_last_round_date'))
+    return bool(amt>=RAISE['min_usd'] and d is not None and 0<=d<=RAISE['within_days'])
 def buzzy(c):
     """Current employer is a hot, well-funded startup (maintained list in config.json, or funding data when sourcing adds it)."""
     if BIGTECH.search(c.get('current_company') or ''): return False
     if _core(c.get('current_company')) in HOT: return True
-    tot=c.get('current_company_funding_usd') or 0; last=c.get('current_company_last_round_usd') or 0; mo=c.get('current_company_last_round_months_ago')
+    if not _startup_round(c): return False
+    tot=c.get('current_company_funding_usd') or 0; last=c.get('current_company_last_round_usd') or 0
+    d=_days_since(c.get('current_company_last_round_date')); mo=d/30.4 if d is not None else c.get('current_company_last_round_months_ago')
     return tot>=BUZZ['total_usd_min'] or (last>=BUZZ['last_round_usd_min'] and (mo is None or mo<=BUZZ['last_round_within_months']))
-STANDING={'discipline':{'software+firmware':8,'firmware':5,'robotics':-30,'electrical/hardware':-35},'buzzy':{'yes':-30}}
+STANDING={'discipline':{'software+firmware':8,'firmware':5,'robotics':-30,'electrical/hardware':-35},'buzzy':{'yes':-30},'recent_raise':{'yes':-25}}
 STANDING_NOTES=['Software engineers first; a dash of firmware/embedded is a plus (+8)','Robotics engineers drop to the bottom (-30)',
- 'Pure electrical/hardware engineers drop to the bottom (-35)','People at buzzy, well-funded startups probably won’t leave (-30)']
+ 'Pure electrical/hardware engineers drop to the bottom (-35)','People at buzzy, well-funded startups probably won’t leave (-30)',
+ 'Current company raised $20M+ in the last ~60 days: they probably won’t leave (-25)']
 def github_quality(c):
     if not c.get('github_url'): return 'none'
     r=_num(c.get('gh_repos')) or 0; f=_num(c.get('gh_followers')) or 0; k=_num(c.get('gh_contribs')) or 0
@@ -65,9 +85,10 @@ def features(c):
       'title_wording':tw,
       'discipline':discipline(c),
       'buzzy':'yes' if buzzy(c) else 'no',
+      'recent_raise':'yes' if recent_raise(c) else 'no',
     }
 FEATURE_LABELS={'region':'Region','bay_area':'Bay Area','yoe':'Experience','founding_tenure':'Founding stint','github':'GitHub','github_quality':'GitHub depth',
- 'personal_site':'Personal site','hardware':'Hardware','yc':'YC company','company_stage':'Founding co. size','employer_type':'Now','title_wording':'Title','discipline':'Discipline','buzzy':'Buzzy startup now'}
+ 'personal_site':'Personal site','hardware':'Hardware','yc':'YC company','company_stage':'Founding co. size','employer_type':'Now','title_wording':'Title','discipline':'Discipline','buzzy':'Buzzy startup now','recent_raise':'Employer raised recently'}
 # Prior = Veeraj's stated spec, in points.
 PRIOR={'founding_tenure':{'6-11 mo':4,'12-23 mo':12,'24+ mo':15},'github':{'yes':10},'github_quality':{'strong':10,'some':5},
  'personal_site':{'yes':8},'hardware':{'yes':3},'bay_area':{'yes':6},'region':{'Singapore':6},'yoe':{'4-5':4,'6-8':3,'2-3':1},
@@ -92,4 +113,5 @@ def standing_reasons(c):
     f=features(c); out=[]
     if f['discipline'] in('robotics','electrical/hardware'): out.append(f['discipline'])
     if f['buzzy']=='yes': out.append('buzzy startup')
+    if f['recent_raise']=='yes': out.append('recent raise')
     return out

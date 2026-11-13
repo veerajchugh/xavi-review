@@ -10,3 +10,4 @@ src/*.json
 src/*.log
 __pycache__/
 taste.json
+src/w*/
