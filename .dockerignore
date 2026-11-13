@@ -1,0 +1,5 @@
+data/
+shots/
+src/raw_*.json
+.site_password
+.site_secret

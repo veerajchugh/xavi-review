@@ -1,0 +1,12 @@
+{
+ "outreach_project_id": "UHJvamVjdDoxNTc1NjQ2",
+ "us_project_id": "UHJvamVjdDoxNTc1NDU5",
+ "singapore_project_id": "UHJvamVjdDoxNTc1NDYw",
+ "outreach_project_url": "https://www.gem.com/projects/Xavi-Outreach--UHJvamVjdDoxNTc1NjQ2",
+ "us_project_url": "https://www.gem.com/projects/Xavi's--UHJvamVjdDoxNTc1NDU5",
+ "singapore_project_url": "https://www.gem.com/projects/Xavi-Singapore--UHJvamVjdDoxNTc1NDYw",
+ "chips": {
+  "approve": ["Great GitHub", "Hardware", "Strong founding stint", "Bay Area", "Singapore", "Great company"],
+  "pass": ["No side projects", "Too senior", "Too junior", "Wrong domain", "Weak company", "Short stint"]
+ }
+}

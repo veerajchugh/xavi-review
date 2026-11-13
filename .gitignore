@@ -1,0 +1,12 @@
+.gem_key
+.site_password
+.site_secret
+.admin_token
+.site_url
+*.db
+data/
+shots/
+src/*.json
+src/*.log
+__pycache__/
+taste.json
