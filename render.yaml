@@ -1,28 +1,15 @@
-# Render Blueprint: private, password-protected review site with a persistent disk for sqlite + taste.json.
+# Render Blueprint for the xavi-review site (adopts the existing service; secrets are set on the
+# service directly and are preserved because they're omitted here).
 services:
   - type: web
     name: xavi-review
-    runtime: python
-    plan: starter            # cheapest plan that supports a persistent disk
+    runtime: docker
+    plan: starter
     region: oregon
-    buildCommand: python3 --version
-    startCommand: python3 server.py
-    healthCheckPath: /healthz
+    branch: main
     autoDeploy: true
-    disk:
-      name: xavi-data
-      mountPath: /data
-      sizeGB: 1
     envVars:
-      - key: DATA_DIR
-        value: /data
-      - key: PYTHON_VERSION
-        value: 3.12.7
-      - key: GEM_API_KEY      # Gem key, server-side only
-        sync: false
-      - key: SITE_PASSWORD    # same password as the box's .site_password
-        sync: false
-      - key: SITE_SECRET      # cookie signing secret
-        sync: false
-      - key: ADMIN_TOKEN      # bearer token for /api/admin/* (add_batch --remote, migrate, outreach sync)
-        sync: false
+      - key: DATABASE_URL     # internal connection string of the existing xavi-review-db Postgres
+        fromDatabase:
+          name: xavi-review-db
+          property: connectionString
