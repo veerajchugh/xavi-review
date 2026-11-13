@@ -164,7 +164,9 @@ class H(BaseHTTPRequestHandler):
                 c=store.conn(); r=store.get(c,h) if h else None
                 if u.path=='/api/decide':
                     if not r: return self.send(404,{'error':'unknown'})
-                    dec=b['decision']; reasons=b.get('reasons') or []; now=int(time.time())
+                    dec=b['decision']; now=int(time.time())
+                    reasons=b.get('reasons') if b.get('reasons') is not None else (r['reasons'] or [])  # free-text note (list of strings); falls back to a draft note saved before deciding
+                    reasons=[x.strip()[:1000] for x in reasons if isinstance(x,str) and x.strip()]
                     gid=r['gem_id']; gp=r['gem_projects']
                     if dec=='approve' and r['status']!='approved':
                         gid,gp=gem_approve(r)
@@ -173,6 +175,11 @@ class H(BaseHTTPRequestHandler):
                     c.execute('insert into decisions(handle,decision,reasons,features,fit,ts,batch) values(?,?,?,?,?,?,?)',(h,dec,json.dumps(reasons),json.dumps(fit.features(r['data'])),r['fit'],now,r['batch']))
                     c.commit(); t=learn_core.learn(); self._rescore(c,t)
                     return self.send(200,{'ok':True,'candidate':public(store.get(c,h)),'taste':t})
+                if u.path=='/api/note':   # draft note typed before deciding
+                    if not r: return self.send(404,{'error':'unknown'})
+                    n=(b.get('note') or '').strip()[:1000]
+                    c.execute('update candidates set reasons=? where handle=?',(json.dumps([n]) if n else None,h)); c.commit()
+                    return self.send(200,{'ok':True,'candidate':public(store.get(c,h))})
                 if u.path=='/api/reasons':
                     c.execute('update candidates set reasons=? where handle=?',(json.dumps(b.get('reasons') or []),h))
                     c.execute('update decisions set reasons=? where id=(select max(id) from decisions where handle=? and undone=0)',(json.dumps(b.get('reasons') or []),h))
@@ -180,7 +187,7 @@ class H(BaseHTTPRequestHandler):
                 if u.path in('/api/undo','/api/restore'):
                     if not r: return self.send(404,{'error':'unknown'})
                     if r['status']=='approved' and r['gem_id']: gem_unapprove(r)
-                    c.execute("update candidates set status='queue',decided_at=null,reasons=null,gem_projects=null where handle=?",(h,))
+                    c.execute("update candidates set status='queue',decided_at=null,gem_projects=null where handle=?",(h,))  # keep the note as a draft
                     c.execute('update decisions set undone=1 where handle=? and undone=0',(h,)); c.commit()
                     t=learn_core.learn(); self._rescore(c,t)
                     return self.send(200,{'ok':True,'candidate':public(store.get(c,h)),'taste':t})

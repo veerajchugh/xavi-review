@@ -61,7 +61,7 @@ h1{font-family:var(--disp);font-size:clamp(40px,6vw,64px);letter-spacing:-.035em
 .toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,30px);opacity:0;pointer-events:none;transition:.32s var(--ease);background:rgba(29,29,31,.94);backdrop-filter:blur(20px);color:#fff;border-radius:20px;padding:14px 16px 14px 20px;box-shadow:0 20px 50px rgba(0,0,0,.25);width:min(640px,calc(100vw - 32px));z-index:50}
 .toast.on{transform:translate(-50%,0);opacity:1;pointer-events:auto}.toast .row{display:flex;align-items:center;gap:12px;font-size:14px}.toast .row span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .toast button.u{border:0;background:rgba(255,255,255,.14);color:#fff;border-radius:10px;padding:6px 12px;font-size:13px;font-weight:600}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.chip{border:1px solid rgba(255,255,255,.18);background:none;color:#e5e5ea;border-radius:999px;padding:5px 11px;font-size:12px;transition:.15s}.chip.on{background:#fff;color:#1d1d1f;border-color:#fff}.chip kbd{font:inherit;opacity:.5;margin-right:5px}
+.note{margin:22px 0 0;position:relative}.note textarea{display:block;width:100%;box-sizing:border-box;resize:none;overflow:hidden;min-height:46px;max-height:180px;border:0;outline:none;border-radius:14px;background:var(--fill);padding:13px 15px;font:400 15px/1.4 var(--font);letter-spacing:-.01em;color:var(--ink);transition:box-shadow .18s var(--ease),background .18s}.note textarea::placeholder{color:var(--ink3)}.note textarea:focus{background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.08),0 0 0 4px rgba(0,113,227,.22)}.note .hint{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--ink3);margin:7px 3px 0;min-height:16px}.note .hint .sv{color:var(--green);opacity:0;transition:opacity .2s}.note .hint .sv.on{opacity:1}.tnote{display:block;width:100%;box-sizing:border-box;margin-top:10px;border:0;outline:none;border-radius:12px;background:rgba(255,255,255,.12);color:#fff;padding:9px 12px;font:400 14px var(--font)}.tnote::placeholder{color:rgba(255,255,255,.5)}.tnote:focus{background:rgba(255,255,255,.18)}.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.chip{border:1px solid rgba(255,255,255,.18);background:none;color:#e5e5ea;border-radius:999px;padding:5px 11px;font-size:12px;transition:.15s}.chip.on{background:#fff;color:#1d1d1f;border-color:#fff}.chip kbd{font:inherit;opacity:.5;margin-right:5px}
 .empty{padding:80px 40px;text-align:center}.empty h2{font-family:var(--disp);font-size:34px;letter-spacing:-.03em;margin:0 0 8px}.empty p{color:var(--ink2);font-size:17px;margin:0}
 .tbl{overflow:hidden}.tbar{display:flex;gap:10px;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line)}.tbar input{flex:1;height:36px;border-radius:10px;border:0;background:var(--fill);padding:0 12px 0 34px;font:inherit;font-size:14px;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Ccircle cx='6' cy='6' r='5'/%3E%3Cpath d='m10 10 3 3'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px 50%}
 .tbar select{height:36px;border-radius:10px;border:0;background:var(--fill);padding:0 10px;font:inherit;font-size:14px}
@@ -75,7 +75,7 @@ td .n{font-weight:500}td .s{color:var(--ink3);font-size:12px}td.num{font-variant
 </style></head><body>
 <div class="nav"><div class="in"><div class="brand"><i>X</i><span>Xavi Review</span></div><div class="tabs" id="tabs"></div></div></div>
 <div class="wrap"><div class="hero"><div class="eyebrow" id="eyebrow"></div><h1 id="title">Founding engineers.</h1><div class="sub" id="sub"></div></div><div id="view"></div></div>
-<div class="toast" id="toast"><div class="row"><span id="tmsg"></span><button class="u" id="tundo">Undo</button></div><div class="chips" id="tchips"></div></div>
+<div class="toast" id="toast"><div class="row"><span id="tmsg"></span><button class="u" id="tundo">Undo</button></div><input class="tnote" id="tnote" maxlength="1000" autocomplete="off" placeholder="Add a note on why (Enter to save)"></div>
 <script>
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let S={candidates:[],stats:{},taste:{},chips:{approve:[],pass:[]}},tab=location.hash.slice(1)||'week',busy=false,last=null,toastT=null,q='',reg='all';
@@ -133,23 +133,30 @@ function card(){const Q=queue(),m=$('#main'),tot=batchTotal(),done=tot-Q.length;
  <div><div class="lbl">Experience</div><div class="val">${yrs(c.total_yoe)}<small>total</small></div></div><div><div class="lbl">Location</div><div class="val">${esc(city(c.location).split(',')[0]||'—')}<small>${(()=>{const a=city(c.location).split(',').map(x=>x.trim());return esc(a.slice(1).filter(x=>x!==a[0]).join(', ')||(c.region==='Singapore'?'':'US'))})()}</small></div></div></div>
  <div class="why">${esc(c.why||'')}</div><div class="links">${gh}${web}${li}</div>
  ${jobs?`<details class="career"><summary>Career</summary>${jobs}</details>`:''}
+ <div class="note"><textarea id="note" rows="1" maxlength="1000" placeholder="Note — why yes or no? (optional)">${esc((c.reasons||[]).join('\n'))}</textarea><div class="hint"><span id="nhint"></span><span class="sv" id="nsv">Saved</span></div></div>
  <div class="act"><button class="btn pass" id="bp">Pass <kbd>←</kbd></button><button class="btn ok" id="ba">Approve <kbd>→</kbd></button></div></div>
  <div class="prog"><span>${done+1} of ${tot}</span><div class="bar"><i style="width:${tot?done/tot*100:0}%"></i></div><span>${Q.length} left</span></div>
- <div class="keys"><span><kbd>→</kbd><kbd>J</kbd>approve</span><span><kbd>←</kbd><kbd>K</kbd>pass</span><span><kbd>U</kbd>undo</span><span><kbd>O</kbd>LinkedIn</span><span><kbd>G</kbd>GitHub</span><span><kbd>1</kbd>–<kbd>6</kbd>reason</span></div>`;
+ <div class="keys"><span><kbd>→</kbd><kbd>J</kbd>approve</span><span><kbd>←</kbd><kbd>K</kbd>pass</span><span><kbd>U</kbd>undo</span><span><kbd>O</kbd>LinkedIn</span><span><kbd>G</kbd>GitHub</span><span><kbd>N</kbd>note</span></div>`;
  requestAnimationFrame(()=>requestAnimationFrame(()=>{const e=$('#cc');e.style.transition='';e.classList.remove('in')}));
- $('#ba').onclick=()=>decide('approve');$('#bp').onclick=()=>decide('pass');}
+ $('#ba').onclick=()=>decide('approve');$('#bp').onclick=()=>decide('pass');wireNote(c);}
+const grow=t=>{t.style.height='auto';t.style.height=Math.min(t.scrollHeight,180)+'px'};
+function wireNote(c){const t=$('#note');if(!t)return;grow(t);let saved=t.value.trim();
+ const save=async()=>{const v=t.value.trim();if(v===saved)return;try{const r=await api('/api/note',{handle:c.handle,note:v});c.reasons=r.candidate.reasons;saved=v;const s=$('#nsv');if(s){s.classList.add('on');setTimeout(()=>s.classList.remove('on'),1400)}}catch(e){}};
+ t.oninput=()=>grow(t);t.onfocus=()=>{$('#nhint').textContent='Enter to save · Shift+Enter for a new line · Esc to close'};t.onblur=()=>{$('#nhint').textContent='';save()};
+ t.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();save()}else if(e.key==='Escape'){e.preventDefault();t.blur()}}}
+const noteVal=()=>{const t=$('#note');return t?t.value.trim():null};
 async function decide(d){if(busy)return;const Q=queue();if(!Q.length)return;const c=Q[0];busy=true;
  const el=$('#cc');if(el)el.classList.add(d==='approve'?'out-r':'out-l');
- const prev=c.status;c.status=d==='approve'?'approved':'passed';
- try{const r=await api('/api/decide',{handle:c.handle,decision:d});Object.assign(c,r.candidate);S.taste=r.taste;last={c,d,reasons:[]};S.stats=(await api('/api/state')).stats;toast(c,d)}
+ const nv=noteVal(),reasons=nv?[nv]:[];const prev=c.status;c.status=d==='approve'?'approved':'passed';
+ try{const r=await api('/api/decide',{handle:c.handle,decision:d,reasons});Object.assign(c,r.candidate);S.taste=r.taste;last={c,d,reasons};S.stats=(await api('/api/state')).stats;toast(c,d)}
  catch(e){c.status=prev;alert('Couldn’t save: '+e.message)}
  busy=false;setTimeout(()=>{if(tab==='week'){tabs();card();$('.rail').innerHTML=rail();$('#sub').textContent=queue().length?`${queue().length} to review. Best fit first.`:'You’re all caught up.'}},el?180:0)}
-function toast(c,d){const t=$('#toast');$('#tmsg').innerHTML=d==='approve'?`<b>Approved ${esc(c.name.split(' ')[0])}.</b> Added to Xavi Outreach in Gem.`:`<b>Passed on ${esc(c.name.split(' ')[0])}.</b> Moved to the bin. Why?`;
- const ch=(S.chips[d==='approve'?'approve':'pass']||[]);$('#tchips').innerHTML=ch.map((x,i)=>`<button class="chip" data-i="${i}"><kbd>${i+1}</kbd>${esc(x)}</button>`).join('');
- $('#tchips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>chip(+b.dataset.i));t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),6500)}
-async function chip(i){if(!last)return;const ch=S.chips[last.d==='approve'?'approve':'pass'][i];if(!ch)return;const k=last.reasons.indexOf(ch);k<0?last.reasons.push(ch):last.reasons.splice(k,1);
- const L=S.chips[last.d==='approve'?'approve':'pass'];$('#tchips').querySelectorAll('.chip').forEach(b=>b.classList.toggle('on',last.reasons.includes(L[+b.dataset.i])));
- clearTimeout(toastT);toastT=setTimeout(()=>$('#toast').classList.remove('on'),5000);const r=await api('/api/reasons',{handle:last.c.handle,reasons:last.reasons});S.taste=r.taste}
+function toast(c,d){const t=$('#toast');$('#tmsg').innerHTML=d==='approve'?`<b>Approved ${esc(c.name.split(' ')[0])}.</b> Added to Xavi Outreach in Gem.`:`<b>Passed on ${esc(c.name.split(' ')[0])}.</b> Moved to the bin.`;
+ const tn=$('#tnote');tn.value=(last&&last.reasons||[]).join(' ');t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),6500)}
+async function saveToastNote(){if(!last)return;const v=$('#tnote').value.trim();last.reasons=v?[v]:[];const r=await api('/api/reasons',{handle:last.c.handle,reasons:last.reasons});S.taste=r.taste;
+ $('#toast').classList.remove('on');$('#tnote').blur()}
+$('#tnote').onfocus=()=>clearTimeout(toastT);$('#tnote').onblur=()=>{clearTimeout(toastT);toastT=setTimeout(()=>$('#toast').classList.remove('on'),2500)};
+$('#tnote').onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();saveToastNote()}else if(e.key==='Escape'){e.preventDefault();$('#tnote').blur()}};
 async function undo(h){h=h||(last&&last.c.handle);if(!h||busy)return;busy=true;try{await api('/api/undo',{handle:h});$('#toast').classList.remove('on');if(last&&last.c.handle===h)last=null;await load()}catch(e){alert(e.message)}busy=false}
 $('#tundo').onclick=()=>undo();
 function list(){const st=tab==='approved'?['approved','resurface']:tab==='passed'?['passed']:null;
@@ -181,6 +188,6 @@ function pipeline(){const st=S.stats,A=S.candidates.filter(c=>c.status==='approv
 document.addEventListener('keydown',e=>{if(e.target.matches('input,select,textarea')||e.metaKey||e.ctrlKey||e.altKey)return;const k=e.key.toLowerCase();
  if(tab==='week'&&(k==='arrowright'||k==='j')){e.preventDefault();decide('approve')}else if(tab==='week'&&(k==='arrowleft'||k==='k')){e.preventDefault();decide('pass')}
  else if(k==='u')undo();else if(k==='o'||k==='g'){const c=queue()[0];if(tab==='week'&&c){const u=k==='o'?c.linkedin_url:c.github_url;if(u)window.open(u,'_blank','noopener')}}
- else if(/^[1-6]$/.test(k)&&$('#toast').classList.contains('on'))chip(+k-1)});
+ else if(k==='n'&&tab==='week'&&$('#note')){e.preventDefault();$('#note').focus()}});
 window.onhashchange=()=>{tab=location.hash.slice(1)||'week';render()};load();
 </script></body></html>
