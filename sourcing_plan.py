@@ -20,9 +20,12 @@ pulls.append({'label':'singapore','country':'Singapore','pages':2,'extra':[]})
 ca_pages=3+(1 if g('bay_area','yes')>0.3 else 0)-(1 if g('bay_area','yes')<-0.3 else 0)
 pulls.append({'label':'california+github','country':'United States','pages':max(1,ca_pages),'extra':[['dev_platform_profiles.all_languages','is_not_null',''],['basic_profile.location.state','=','California']]})
 pulls.append({'label':'rest of us+github','country':'United States','pages':2 if g('bay_area','no')>=-0.3 else 1,'extra':[['dev_platform_profiles.all_languages','is_not_null',''],['basic_profile.location.state','!=','California']]})
-if g('hardware','yes')>0.2 or conf<0.2:
-    pulls.append({'label':'hardware founding engineers','country':'United States','pages':1+(g('hardware','yes')>0.5),'extra':[['experience.employment_details.title','(.)','firmware embedded hardware robotics']]})
+# Standing rule (Nov 13, 2026): software people with a dash of firmware. No robotics/EE pull any more.
+FW=[['OR',[['experience.employment_details.title','(.)','firmware'],['experience.employment_details.title','(.)','embedded']]]]
+pulls.append({'label':'software + firmware/embedded (US)','country':'United States','pages':1,'extra':FW})
+pulls.append({'label':'software + firmware/embedded (Singapore)','country':'Singapore','pages':1,'extra':FW})
 if g('github','no')>-0.5:
     pulls.append({'label':'bay area, no github filter','country':'United States','pages':1,'extra':[['basic_profile.location.state','=','California']]})
-for p in pulls: p['exclude']=seen[-2000:]
-print(json.dumps({'target':target,'singapore_share':sg_share,'over_source':t.get('sourcing',{}).get('over_source',[]),'down_rank':t.get('sourcing',{}).get('down_rank',[]),'pulls':pulls},indent=1)[:200000])
+EXCLUDE_TITLES=['robotics','robot','electrical','mechanical','hardware engineer','mechatronics','controls engineer']
+for p in pulls: p['exclude']=seen[-2000:]; p['exclude_titles']=EXCLUDE_TITLES; p['exclude_companies']=fit._CFG.get('hot_companies',[])
+print(json.dumps({'target':target,'singapore_share':sg_share,'over_source':t.get('sourcing',{}).get('over_source',[]),'down_rank':t.get('sourcing',{}).get('down_rank',[]),'standing_rules':fit.STANDING_NOTES,'pulls':pulls},indent=1)[:200000])

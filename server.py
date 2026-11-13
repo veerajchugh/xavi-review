@@ -123,6 +123,12 @@ class H(BaseHTTPRequestHandler):
                     r=store.get(c,h)
                     if r: c.execute('update candidates set outreach=?,outreach_checked_at=? where handle=?',(json.dumps({**(r['outreach'] or {}),**o}),int(time.time()),h)); k+=1
                 c.commit(); return self.send(200,{'updated':k,'resurfaced':add_batch.resurface(c)})
+            if path=='/api/admin/rescore':   # re-learn + rescore undecided people (decisions untouched)
+                before={x['handle']:x['fit'] for x in store.all_rows(c) if x['status'] in('queue','resurface')}
+                t=learn_core.learn(); self._rescore(c,t); after=store.all_rows(c)
+                und=[x for x in after if x['status'] in('queue','resurface')]
+                return self.send(200,{'undecided':len(und),'demoted':[{'name':x['data'].get('name'),'from':before.get(x['handle']),'to':x['fit'],'why':fit.standing_reasons(x['data'])} for x in und if fit.standing_reasons(x['data'])],
+                                      'top':[{'name':x['data'].get('name'),'fit':x['fit']} for x in sorted(und,key=lambda x:-(x['fit'] or 0))[:5]],'standing':t.get('standing_priors')})
             if path=='/api/admin/dump':
                 return self.send(200,{'candidates':store.all_rows(c),'decisions':[dict(x) for x in c.execute('select * from decisions')],'taste':fit.load_taste()})
             if path=='/api/admin/export_for_sync':

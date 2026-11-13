@@ -97,6 +97,7 @@ def learn(write=True):
           'region_split_singapore':0.2 if out['weights'].get('region',{}).get('Singapore',0)>=-0.2 else 0.1,
           'require_github':out['weights'].get('github',{}).get('no',0)<-0.7,
           'note':f'baseline approve rate {base}%. weights are log-odds vs baseline; confidence grows with decisions.'}
+    out['standing_priors']={'rules':F.STANDING_NOTES,'points':F.STANDING,'hot_companies':len(F.HOT),'set_at':'2026-11-13'}
     out['notes']=out['notes'][-25:]   # recent free-text notes, read by the weekly sourcing run
     if write:
         if S.DATABASE_URL: S.taste_set(out)
